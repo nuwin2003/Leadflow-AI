@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { ArrowRight, LockKeyhole, Mail, ShieldCheck, Zap } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
@@ -10,20 +10,16 @@ export default function LoginPage() {
   const router = useRouter();
   const {
     hasCompletedCsvImport,
-    isAuthenticated,
-    isHydrated,
     isRegistered,
     loginWithCredentials,
     loginWithGoogle,
+    markAuthenticatedSession,
   } = useApp();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (!isHydrated || !isAuthenticated) return;
-    router.replace(hasCompletedCsvImport ? "/dashboard" : "/import");
-  }, [hasCompletedCsvImport, isAuthenticated, isHydrated, router]);
+  const [successPopup, setSuccessPopup] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleGoogleSignIn() {
     const result = loginWithGoogle();
@@ -31,15 +27,54 @@ export default function LoginPage() {
     router.push(result.needsProfile ? "/register" : "/import");
   }
 
-  function handleCredentialsSignIn(event: FormEvent<HTMLFormElement>) {
+  async function handleCredentialsSignIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const result = loginWithCredentials(email, password);
-    if (!result.ok) {
-      setError(result.error ?? "Unable to login.");
-      return;
-    }
     setError("");
-    router.push(hasCompletedCsvImport ? "/dashboard" : "/import");
+    setSuccessPopup("");
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("https://nuwin2003.app.n8n.cloud/webhook-test/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: email.trim(),
+          password: password.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        setError("Login request failed. Please try again.");
+        return;
+      }
+
+      const data = (await response.json()) as {
+        status?: string;
+        message?: string;
+      };
+
+      if (data.status !== "success") {
+        setError(data.message ?? "Login failed.");
+        return;
+      }
+
+      const localCheck = loginWithCredentials(email, password);
+      if (!localCheck.ok) {
+        // If local registered profile isn't set yet, still allow webhook-authenticated session.
+        markAuthenticatedSession();
+      }
+
+      setSuccessPopup(data.message ?? "User Login Success");
+      setTimeout(() => {
+        router.push(hasCompletedCsvImport ? "/dashboard" : "/import");
+      }, 900);
+    } catch {
+      setError("Unable to reach login server.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -174,7 +209,7 @@ export default function LoginPage() {
                 </div>
 
                 <button type="submit" className="btn btn-primary w-full justify-center py-2.5">
-                  Login
+                  {isSubmitting ? "Logging in..." : "Login"}
                   <ArrowRight size={15} />
                 </button>
               </form>
@@ -197,6 +232,12 @@ export default function LoginPage() {
           </div>
         </section>
       </div>
+
+      {successPopup ? (
+        <div className="fixed bottom-4 right-4 z-50 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 shadow-sm">
+          {successPopup}
+        </div>
+      ) : null}
     </main>
   );
 }

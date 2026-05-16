@@ -14,7 +14,6 @@ import {
   Plug,
   Settings,
   SquarePen,
-  ShieldCheck,
   Users,
   Zap,
 } from "lucide-react";
@@ -37,7 +36,6 @@ const NAV_MAIN: NavItem[] = [
 
 const NAV_CONFIG: NavItem[] = [
   { href: "/config", label: "User Config", Icon: Settings },
-  { href: "/admin", label: "Super Admin", Icon: ShieldCheck },
 ];
 
 export default function Sidebar() {

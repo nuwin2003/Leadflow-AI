@@ -8,7 +8,6 @@ import type {
   Lead,
   RegisteredUserProfile,
   TenantConfig,
-  ViewMode,
 } from "@/types/app";
 
 const APP_STORAGE_KEY = "leadflow.app-state.v1";
@@ -33,8 +32,6 @@ interface AppContextValue {
   currentTenant: string;
   setCurrentTenant: (tenant: string) => void;
   tenantConfig: TenantConfig;
-  viewMode: ViewMode;
-  switchView: (mode: ViewMode) => void;
   integrations: Integration[];
   toggleIntegration: (key: string) => void;
   dailyLimit: number;
@@ -49,6 +46,7 @@ interface AppContextValue {
   registerUser: (profile: RegisteredUserProfile) => void;
   loginWithGoogle: () => { ok: boolean; needsProfile: boolean };
   loginWithCredentials: (email: string, password: string) => { ok: boolean; error?: string };
+  markAuthenticatedSession: () => void;
   logoutUser: () => void;
   updateUserProfile: (profile: RegisteredUserProfile) => void;
   setPendingImportLeads: (leads: Lead[]) => void;
@@ -60,7 +58,6 @@ const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentTenant, setCurrentTenant] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<ViewMode>("user");
   const [integrations, setIntegrations] =
     useState<Integration[]>(INTEGRATIONS_DEFAULT);
   const [dailyLimit, setDailyLimit] = useState<number>(50);
@@ -103,10 +100,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   }
 
-  function switchView(mode: ViewMode) {
-    setViewMode(mode);
-  }
-
   function registerUser(profile: RegisteredUserProfile) {
     setPersistedState((prev) => ({
       ...prev,
@@ -146,6 +139,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
     setPersistedState((prev) => ({ ...prev, isAuthenticated: true }));
     return { ok: true };
+  }
+
+  function markAuthenticatedSession() {
+    setPersistedState((prev) => ({ ...prev, isAuthenticated: true }));
   }
 
   function logoutUser() {
@@ -192,8 +189,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       currentTenant,
       setCurrentTenant,
       tenantConfig,
-      viewMode,
-      switchView,
       integrations,
       toggleIntegration,
       dailyLimit,
@@ -208,6 +203,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       registerUser,
       loginWithGoogle,
       loginWithCredentials,
+      markAuthenticatedSession,
       logoutUser,
       updateUserProfile,
       setPendingImportLeads,
@@ -217,7 +213,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [
       currentTenant,
       tenantConfig,
-      viewMode,
       integrations,
       dailyLimit,
       persistedState,

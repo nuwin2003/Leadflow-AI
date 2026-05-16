@@ -6,10 +6,7 @@ export type AppPageId =
   | "campaigns"
   | "integrations"
   | "analytics"
-  | "config"
-  | "admin";
-
-export type ViewMode = "user" | "admin";
+  | "config";
 
 export type LeadStatus =
   | "ready_to_email"
