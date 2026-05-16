@@ -67,10 +67,8 @@ export default function LeadsPage() {
         <table className="data-table">
           <thead>
             <tr>
-              <th className="pl-4">Name</th>
-              <th>Title</th>
-              <th>Company</th>
-              <th>Email</th>
+              <th className="pl-4">Company Name</th>
+              <th>Company Email</th>
               <th className="text-center">Conf.</th>
               <th>Source</th>
               <th>Status</th>
@@ -81,20 +79,16 @@ export default function LeadsPage() {
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={9} className="text-center text-gray-300 py-10">
+                <td colSpan={7} className="text-center text-gray-300 py-10">
                   No leads match your filters.
                 </td>
               </tr>
             )}
             {filtered.map(lead => (
               <tr key={lead.id}>
-                <td className="pl-4">
-                  <span className="font-medium text-gray-800">
-                    {lead.firstName} {lead.lastName}
-                  </span>
+                <td>
+                  <span className="font-medium text-gray-700">{lead.company}</span>
                 </td>
-                <td className="text-xs text-gray-500 max-w-[140px] truncate">{lead.title}</td>
-                <td className="font-medium text-gray-700">{lead.company}</td>
                 <td>
                   <span className="font-mono text-xs text-gray-500">{lead.email}</span>
                 </td>
