@@ -9,6 +9,7 @@ import type { ViewMode } from "@/types/app";
 const PAGE_TITLES: Record<string, string> = {
   "/": "Dashboard",
   "/dashboard": "Dashboard",
+  "/import": "CSV Import",
   "/leads": "Leads",
   "/campaigns": "Campaigns",
   "/integrations": "Integrations",

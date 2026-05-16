@@ -6,6 +6,7 @@ import { useState } from "react";
 import {
   BarChart2,
   ChevronRight,
+  FileSpreadsheet,
   LayoutDashboard,
   LogOut,
   Megaphone,
@@ -17,6 +18,7 @@ import {
   Zap,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useApp } from "@/context/AppContext";
 
 interface NavItem {
   href: string;
@@ -40,6 +42,7 @@ const NAV_CONFIG: NavItem[] = [
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { logoutUser, userProfile } = useApp();
   const [openProfileMenu, setOpenProfileMenu] = useState(false);
 
   function isActive(href: string): boolean {
@@ -63,8 +66,16 @@ export default function Sidebar() {
 
   function handleLogout() {
     setOpenProfileMenu(false);
+    logoutUser();
     router.push("/login");
   }
+
+  const profileInitials = `${userProfile?.firstName?.[0] ?? "A"}${userProfile?.lastName?.[0] ?? "C"}`;
+  const profileName =
+    userProfile?.firstName && userProfile?.lastName
+      ? `${userProfile.firstName} ${userProfile.lastName}`
+      : "Admin Client";
+  const profileCompany = userProfile?.companyName ?? "client_001";
 
   return (
     <aside className="w-56 min-w-56 bg-white border-r border-gray-100 flex flex-col h-full">
@@ -89,6 +100,13 @@ export default function Sidebar() {
         </nav>
 
         <p className="text-[10px] font-medium text-gray-300 uppercase tracking-widest px-2 mb-2 mt-4">
+          Onboarding
+        </p>
+        <nav className="flex flex-col gap-0.5 mb-4">
+          <NavLink href="/import" label="Import CSV" Icon={FileSpreadsheet} />
+        </nav>
+
+        <p className="text-[10px] font-medium text-gray-300 uppercase tracking-widest px-2 mb-2 mt-4">
           Settings
         </p>
         <nav className="flex flex-col gap-0.5">
@@ -105,11 +123,11 @@ export default function Sidebar() {
           aria-label="Open profile actions"
         >
           <div className="w-7 h-7 rounded-full bg-brand-50 flex items-center justify-center flex-shrink-0">
-            <span className="text-[11px] font-semibold text-brand-600">AC</span>
+            <span className="text-[11px] font-semibold text-brand-600">{profileInitials}</span>
           </div>
           <div className="flex-1 text-left min-w-0">
-            <p className="text-[13px] font-medium text-gray-800 truncate">Admin Client</p>
-            <p className="text-[10px] text-gray-400">client_001</p>
+            <p className="text-[13px] font-medium text-gray-800 truncate">{profileName}</p>
+            <p className="text-[10px] text-gray-400 truncate">{profileCompany}</p>
           </div>
           <MoreHorizontal size={14} className="text-gray-400 flex-shrink-0" />
         </button>

@@ -2,26 +2,24 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
-import { ArrowRight, LockKeyhole, Mail, ShieldCheck, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ShieldCheck, Zap } from "lucide-react";
+import { useApp } from "@/context/AppContext";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { hasCompletedCsvImport, isAuthenticated, isHydrated, loginWithGoogle } = useApp();
   const [error, setError] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const normalizedEmail = email.trim();
+  useEffect(() => {
+    if (!isHydrated || !isAuthenticated) return;
+    router.replace(hasCompletedCsvImport ? "/dashboard" : "/import");
+  }, [hasCompletedCsvImport, isAuthenticated, isHydrated, router]);
 
-    if (!normalizedEmail.includes("@") || password.trim().length === 0) {
-      setError("Enter a valid email and password to continue.");
-      return;
-    }
-
+  function handleGoogleSignIn() {
+    const result = loginWithGoogle();
     setError("");
-    router.push("/dashboard");
+    router.push(result.needsProfile ? "/register" : "/import");
   }
 
   return (
@@ -88,7 +86,7 @@ export default function LoginPage() {
                   Welcome back
                 </h2>
                 <p className="mt-2 text-sm text-gray-400">
-                  Log in to continue to your LeadFlow AI dashboard.
+                  Continue with Google to access your LeadFlow AI workspace.
                 </p>
               </div>
 
@@ -96,6 +94,7 @@ export default function LoginPage() {
                 type="button"
                 className="btn w-full justify-center gap-2 py-2.5"
                 aria-label="Continue with Google"
+                onClick={handleGoogleSignIn}
               >
                 <span className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-700">
                   G
@@ -103,74 +102,17 @@ export default function LoginPage() {
                 Continue with Gmail
               </button>
 
-              <div className="my-6 flex items-center gap-3">
-                <div className="h-px flex-1 bg-gray-100" />
-                <span className="text-xs font-medium uppercase tracking-wider text-gray-300">
-                  or
-                </span>
-                <div className="h-px flex-1 bg-gray-100" />
-              </div>
-
-              <form className="space-y-4" onSubmit={handleSubmit}>
-                <div>
-                  <label className="form-label" htmlFor="email">
-                    Email address
-                  </label>
-                  <div className="group relative">
-                    <Mail
-                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 transition-opacity group-focus-within:opacity-0"
-                      size={16}
-                    />
-                    <input
-                      id="email"
-                      className="form-input pl-9 focus:placeholder-transparent"
-                      type="email"
-                      placeholder="admin@leadflow.ai"
-                      autoComplete="email"
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="form-label" htmlFor="password">
-                    Password
-                  </label>
-                  <div className="group relative">
-                    <LockKeyhole
-                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 transition-opacity group-focus-within:opacity-0"
-                      size={16}
-                    />
-                    <input
-                      id="password"
-                      className="form-input pl-9 focus:placeholder-transparent"
-                      type="password"
-                      placeholder="Enter password"
-                      autoComplete="current-password"
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {error ? <p className="text-xs text-red-500">{error}</p> : null}
-
-                <button type="submit" className="btn btn-primary w-full justify-center py-2.5">
-                  Continue
-                  <ArrowRight size={15} />
-                </button>
-              </form>
+              {error ? <p className="mt-4 text-xs text-red-500">{error}</p> : null}
 
               <p className="mt-5 rounded-lg bg-gray-50 px-3 py-2 text-center text-xs text-gray-400">
-                Authentication will connect to Supabase later.
+                Google authentication is mocked for now. n8n integration will be connected later.
               </p>
             </div>
 
             <p className="mt-5 text-center text-xs text-gray-400">
-              Need to preview the app?{" "}
-              <Link className="font-medium text-brand-600 hover:text-brand-800" href="/dashboard">
-                Back to dashboard
+              First time here?{" "}
+              <Link className="font-medium text-brand-600 hover:text-brand-800" href="/register">
+                Add your company details
               </Link>
             </p>
           </div>

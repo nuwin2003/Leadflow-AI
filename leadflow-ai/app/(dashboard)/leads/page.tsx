@@ -3,17 +3,19 @@
 import { useMemo, useState } from "react";
 import { Check, Download, Search, X } from "lucide-react";
 
-import { SEED_LEADS } from "@/data/mockData";
+import { useApp } from "@/context/AppContext";
 import { fmtDate, fmtSource, StatusBadge } from "@/utils/helpers";
 
 export default function LeadsPage() {
+  const { hasCompletedCsvImport, leads } = useApp();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
   const [source, setSource] = useState("");
 
   const filtered = useMemo(() => {
+    if (!hasCompletedCsvImport) return [];
     const q = query.toLowerCase();
-    return SEED_LEADS.filter((lead) => {
+    return leads.filter((lead) => {
       const matchQ =
         !q ||
         [lead.firstName, lead.lastName, lead.company, lead.email, lead.title]
@@ -24,7 +26,7 @@ export default function LeadsPage() {
       const matchSrc = !source || lead.source === source;
       return matchQ && matchS && matchSrc;
     });
-  }, [query, status, source]);
+  }, [hasCompletedCsvImport, leads, query, source, status]);
 
   return (
     <div className="space-y-4">
@@ -32,7 +34,7 @@ export default function LeadsPage() {
         <div>
           <h2 className="text-base font-semibold text-gray-800">Lead Database</h2>
           <p className="text-xs text-gray-400">
-            {filtered.length} of {SEED_LEADS.length} leads
+            {hasCompletedCsvImport ? `${filtered.length} of ${leads.length} leads` : "0 leads"}
           </p>
         </div>
         <button className="btn gap-1.5">
@@ -83,6 +85,13 @@ export default function LeadsPage() {
             </tr>
           </thead>
           <tbody>
+            {!hasCompletedCsvImport && (
+              <tr>
+                <td colSpan={7} className="text-center text-gray-300 py-10">
+                  No leads yet. Upload and submit your CSV in the Import CSV section.
+                </td>
+              </tr>
+            )}
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={7} className="text-center text-gray-300 py-10">
@@ -90,7 +99,8 @@ export default function LeadsPage() {
                 </td>
               </tr>
             )}
-            {filtered.map((lead) => (
+            {hasCompletedCsvImport &&
+              filtered.map((lead) => (
               <tr key={lead.id}>
                 <td>
                   <span className="font-medium text-gray-700">{lead.company}</span>
@@ -122,7 +132,7 @@ export default function LeadsPage() {
                 </td>
                 <td className="text-xs text-gray-400">{fmtDate(lead.createdAt)}</td>
               </tr>
-            ))}
+              ))}
           </tbody>
         </table>
       </div>

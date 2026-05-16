@@ -1,5 +1,6 @@
 export type AppPageId =
   | "dashboard"
+  | "import"
   | "leads"
   | "campaigns"
   | "integrations"
@@ -51,6 +52,13 @@ export interface Lead {
   dedupHash: string;
   isMockData: boolean;
   createdAt: string;
+}
+
+export interface RegisteredUserProfile {
+  firstName: string;
+  lastName: string;
+  companyEmail: string;
+  companyName: string;
 }
 
 export interface Campaign {

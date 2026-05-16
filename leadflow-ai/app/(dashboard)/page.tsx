@@ -30,22 +30,42 @@ function MetricCard({
 }
 
 export default function DashboardPage() {
-  const { currentTenant, setCurrentTenant } = useApp();
+  const { currentTenant, hasCompletedCsvImport, setCurrentTenant, leads } = useApp();
   const tenantCfg = TENANT_CONFIGS[currentTenant] || TENANT_CONFIGS.all;
+  const csvLeadCount = leads.filter((lead) => lead.source === "csv_upload").length;
+  const weeklyLeads = Math.min(leads.length, 50);
+  const hasData = hasCompletedCsvImport && leads.length > 0;
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-4 gap-3">
-        <MetricCard label="Total Leads" value="312" sub="all campaigns" />
+        <MetricCard
+          label="Total Leads"
+          value={String(leads.length)}
+          sub={hasData ? "all campaigns" : "upload CSV to populate"}
+        />
         <MetricCard
           label="Weekly Additions"
-          value="+50"
-          sub="added this week"
+          value={`+${weeklyLeads}`}
+          sub={hasData ? "added this week" : "no imported data"}
           subColor="text-emerald-500"
         />
-        <MetricCard label="Campaign Sources" value="4" sub="LinkedIn · FB · CSV · API" />
+        <MetricCard
+          label="CSV Imported Leads"
+          value={String(csvLeadCount)}
+          sub={csvLeadCount > 0 ? "from onboarding upload" : "none imported yet"}
+        />
         <MetricCard label="n8n Workflows" value="8" sub="7 active · 1 paused" />
       </div>
+
+      {!hasData ? (
+        <div className="card p-5">
+          <h2 className="card-title">No lead data yet</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Upload and submit a CSV in the Import CSV section to populate dashboard tables.
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr 272px" }}>
         <div className="card">
