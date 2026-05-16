@@ -1,26 +1,298 @@
-@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap");
+@import url("https://fonts.cdnfonts.com/css/reglo");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  @apply bg-gray-50 text-base text-gray-900 antialiased;
+  font-family: var(--font-dm), "DM Sans", system-ui, sans-serif;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3 {
+    font-family: Reglo, var(--font-syne), sans-serif;
+    font-weight: 700;
+  }
+}
+
+/* Shimmer: white → blue → gold → white loop */
+@keyframes shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+/* Floating orb drift animations */
+@keyframes drift1 {
+  0%,
+  100% {
+    transform: translate(0px, 0px);
+  }
+  33% {
+    transform: translate(-18px, 24px);
+  }
+  66% {
+    transform: translate(12px, -16px);
+  }
+}
+
+@keyframes drift2 {
+  0%,
+  100% {
+    transform: translate(0px, 0px);
+  }
+  33% {
+    transform: translate(22px, -18px);
+  }
+  66% {
+    transform: translate(-14px, 20px);
+  }
+}
+
+@keyframes drift3 {
+  0%,
+  100% {
+    transform: translate(-50%, -50%);
+  }
+  50% {
+    transform: translate(-44%, -56%);
+  }
+}
+
+/* Subtle grid texture for left panel */
+.grid-overlay {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+/* Gradient text with gold shimmer */
+.gradient-text-gold {
+  background: linear-gradient(
+    90deg,
+    #ffffff 0%,
+    #90caf9 20%,
+    #ffd54f 40%,
+    #29b6f6 60%,
+    #ffe082 80%,
+    #ffffff 100%
+  );
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 6s linear infinite;
+}
+
+/* Primary action buttons — blue gradient only (no gold on hover) */
+.btn-primary,
+.login-btn {
+  border-color: transparent !important;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #1565c0 0%, #0288d1 50%, #0d47a1 100%);
+  background-size: 200% 100%;
+  background-position: 0% 0%;
+  transition:
+    background-position 0.45s ease,
+    box-shadow 0.3s ease,
+    transform 0.15s ease;
+  box-shadow: 0 4px 18px rgba(21, 101, 192, 0.35);
+}
+
+.btn-primary:hover:not(:disabled),
+.login-btn:hover:not(:disabled) {
+  background-position: 100% 0%;
+  box-shadow: 0 8px 28px rgba(21, 101, 192, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled),
+.login-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled,
+.login-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.sidebar-nav-item {
+  @apply flex items-center gap-2.5 px-3 py-2.5 rounded-lg cursor-pointer text-gray-500 text-[15px] transition-all duration-150 hover:bg-gray-100 hover:text-gray-900 select-none;
+}
+.sidebar-nav-item.active {
+  @apply bg-brand-50 text-brand-600 font-medium;
+}
+
+.card {
+  @apply bg-white border border-gray-200 rounded-xl p-4;
+}
+.card-title {
+  @apply text-sm font-medium uppercase tracking-wider text-gray-400;
+}
+
+.metric-card {
+  @apply bg-gray-50 border border-gray-100 rounded-xl p-4;
+}
+.metric-label {
+  @apply text-sm text-gray-400 mb-1 uppercase tracking-wide;
+}
+.metric-value {
+  @apply text-4xl font-bold text-gray-900 leading-tight;
+  font-family: Reglo, var(--font-syne), sans-serif;
+}
+.metric-sub {
+  @apply text-sm text-gray-400 mt-1;
+}
+
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+.badge-sent {
+  @apply bg-emerald-50 text-emerald-800;
+}
+.badge-dedup {
+  @apply bg-gray-100 text-gray-600;
+}
+.badge-active {
+  @apply bg-blue-50 text-blue-700;
+}
+.badge-paused {
+  @apply bg-amber-50 text-amber-800;
+}
+.badge-error {
+  @apply bg-red-50 text-red-700;
+}
+.badge-replied {
+  @apply bg-violet-50 text-violet-700;
+}
+.badge-ready {
+  @apply bg-green-50 text-green-700;
+}
+
+.btn {
+  @apply inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[15px] font-medium border border-gray-200 bg-white text-gray-700 cursor-pointer transition-all hover:bg-gray-50 active:scale-95 select-none;
+}
+.btn-danger {
+  @apply text-red-600 border-red-200 hover:bg-red-50;
+}
+.btn-sm {
+  @apply px-3 py-1.5 text-sm rounded-lg;
+}
+
+.btn-lg {
+  @apply px-5 py-3.5 text-base rounded-xl font-bold;
+}
+.btn-icon {
+  @apply p-2 rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 cursor-pointer transition-all;
+}
+
+.form-label {
+  @apply mb-2 block text-sm font-medium text-gray-600;
+}
+.form-input {
+  @apply w-full rounded-xl border border-[#dde5f4] bg-[#f8faff] px-4 py-3 text-base text-[#0d1b3e] transition-all duration-200 placeholder:text-gray-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/10;
+}
+.form-input::placeholder {
+  transition: none;
+}
+.form-input:focus::placeholder,
+.form-input:not(:placeholder-shown)::placeholder {
+  opacity: 0;
+}
+.form-select {
+  @apply w-full cursor-pointer appearance-none rounded-xl border border-[#dde5f4] bg-[#f8faff] px-4 py-3 text-base text-[#0d1b3e] focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/10;
+}
+
+.data-table {
+  @apply w-full text-base;
+}
+.data-table thead th {
+  @apply border-b border-gray-100 px-3 py-3 text-left text-sm font-medium uppercase tracking-wider text-gray-400;
+}
+.data-table tbody td {
+  @apply border-b border-gray-50 px-3 py-3 align-middle text-gray-700;
+}
+.data-table tbody tr:last-child td {
+  @apply border-b-0;
+}
+.data-table tbody tr:hover td {
+  @apply bg-gray-50/80;
+}
+
+.toggle-track {
+  @apply relative inline-block w-9 h-5 cursor-pointer;
+}
+.toggle-track input {
+  @apply opacity-0 w-0 h-0;
+}
+.toggle-thumb {
+  @apply absolute inset-0 rounded-full bg-gray-200 transition-all duration-200;
+}
+.toggle-thumb::before {
+  content: "";
+  @apply absolute w-3.5 h-3.5 bg-white rounded-full left-0.5 top-0.5 transition-transform duration-200 shadow-sm;
+}
+.toggle-track input:checked ~ .toggle-thumb {
+  @apply bg-brand-600;
+}
+.toggle-track input:checked ~ .toggle-thumb::before {
+  transform: translateX(16px);
+}
+
+.search-bar {
+  @apply flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2;
+}
+.search-bar input {
+  @apply bg-transparent border-none outline-none flex-1 text-sm text-gray-700 placeholder:text-gray-300;
+}
+
+.tag-wrap {
+  @apply flex flex-wrap gap-1.5 p-2 min-h-[40px] border border-gray-200 rounded-lg bg-white cursor-text;
+}
+.tag-chip {
+  @apply flex items-center gap-1 bg-brand-50 text-brand-600 rounded-full px-2.5 py-0.5 text-xs font-medium;
+}
+.tag-chip button {
+  @apply text-brand-400 hover:text-brand-800 leading-none;
+}
+
+.error-code {
+  @apply font-mono text-xs text-red-600 bg-red-50 px-1.5 py-0.5 rounded;
+}
+
+.secret-badge {
+  @apply text-[10px] font-semibold text-red-500 bg-red-50 px-1.5 py-0.5 rounded ml-1;
 }
