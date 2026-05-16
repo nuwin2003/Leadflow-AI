@@ -123,16 +123,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string,
   ): { ok: boolean; error?: string } {
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedLogin = email.trim().toLowerCase();
     const normalizedPassword = password.trim();
-    if (!normalizedEmail || !normalizedPassword) {
-      return { ok: false, error: "Enter email and password." };
+    if (!normalizedLogin || !normalizedPassword) {
+      return { ok: false, error: "Enter username/email and password." };
     }
     if (!persistedState.userProfile || !persistedState.isRegistered) {
       return { ok: false, error: "No registered user found. Please register first." };
     }
-    if (normalizedEmail !== persistedState.userProfile.companyEmail.toLowerCase()) {
-      return { ok: false, error: "Email does not match registered company email." };
+    const emailMatch = normalizedLogin === persistedState.userProfile.companyEmail.toLowerCase();
+    const usernameMatch = normalizedLogin === persistedState.userProfile.username.toLowerCase();
+    if (!emailMatch && !usernameMatch) {
+      return { ok: false, error: "Username/email does not match registered account." };
     }
     if (normalizedPassword !== persistedState.userProfile.password) {
       return { ok: false, error: "Incorrect password." };

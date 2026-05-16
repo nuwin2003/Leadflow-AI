@@ -7,6 +7,7 @@ import { useApp } from "@/context/AppContext";
 import type { RegisteredUserProfile } from "@/types/app";
 
 const EMPTY_PROFILE: RegisteredUserProfile = {
+  username: "",
   firstName: "",
   lastName: "",
   companyEmail: "",
@@ -35,6 +36,7 @@ export default function ProfilePage() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const normalized: RegisteredUserProfile = {
+      username: form.username.trim(),
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
       companyEmail: form.companyEmail.trim().toLowerCase(),
@@ -42,6 +44,7 @@ export default function ProfilePage() {
       password: form.password.trim(),
     };
     if (
+      !normalized.username ||
       !normalized.firstName ||
       !normalized.lastName ||
       !normalized.companyEmail ||
@@ -72,6 +75,18 @@ export default function ProfilePage() {
         </p>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+          <div>
+            <label className="form-label" htmlFor="username">
+              Username
+            </label>
+            <input
+              id="username"
+              className="form-input"
+              value={form.username}
+              onChange={(event) => updateField("username", event.target.value)}
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="form-label" htmlFor="firstName">

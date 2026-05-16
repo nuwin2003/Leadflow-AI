@@ -53,6 +53,7 @@ export interface Lead {
 }
 
 export interface RegisteredUserProfile {
+  username: string;
   firstName: string;
   lastName: string;
   companyEmail: string;

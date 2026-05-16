@@ -168,7 +168,7 @@ export default function LoginPage() {
               <form className="space-y-4" onSubmit={handleCredentialsSignIn}>
                 <div>
                   <label className="form-label" htmlFor="email">
-                    Email address
+                    Username or email
                   </label>
                   <div className="group relative">
                     <Mail
@@ -178,9 +178,9 @@ export default function LoginPage() {
                     <input
                       id="email"
                       className="form-input pl-9 focus:placeholder-transparent"
-                      type="email"
-                      placeholder="name@company.com"
-                      autoComplete="email"
+                      type="text"
+                      placeholder="client1 or name@company.com"
+                      autoComplete="username"
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
                     />

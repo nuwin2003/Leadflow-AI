@@ -8,6 +8,7 @@ import { ArrowRight, Building2, Mail, ShieldCheck, UserCircle2, Zap } from "luci
 import { useApp } from "@/context/AppContext";
 
 interface FormState {
+  username: string;
   firstName: string;
   lastName: string;
   companyEmail: string;
@@ -16,6 +17,7 @@ interface FormState {
 }
 
 const INITIAL_STATE: FormState = {
+  username: "",
   firstName: "",
   lastName: "",
   companyEmail: "",
@@ -28,6 +30,8 @@ export default function RegisterPage() {
   const { isRegistered, registerUser } = useApp();
   const [form, setForm] = useState<FormState>(INITIAL_STATE);
   const [error, setError] = useState("");
+  const [successPopup, setSuccessPopup] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!isRegistered) return;
@@ -38,15 +42,19 @@ export default function RegisterPage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError("");
+    setSuccessPopup("");
+
+    const username = form.username.trim();
     const firstName = form.firstName.trim();
     const lastName = form.lastName.trim();
     const companyEmail = form.companyEmail.trim().toLowerCase();
     const companyName = form.companyName.trim();
     const password = form.password.trim();
 
-    if (!firstName || !lastName || !companyEmail || !companyName || !password) {
+    if (!username || !firstName || !lastName || !companyEmail || !companyName || !password) {
       setError("All fields are required.");
       return;
     }
@@ -56,16 +64,57 @@ export default function RegisterPage() {
       return;
     }
 
-    registerUser({
-      firstName,
-      lastName,
-      companyEmail,
-      companyName,
-      password,
-    });
+    try {
+      setIsSubmitting(true);
 
-    setError("");
-    router.push("/import");
+      const response = await fetch("https://nuwin2003.app.n8n.cloud/webhook-test/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          firstName,
+          lastName,
+          password,
+          companyName,
+          email: companyEmail,
+        }),
+      });
+
+      if (!response.ok) {
+        setError("Signup request failed. Please try again.");
+        return;
+      }
+
+      const data = (await response.json()) as {
+        status?: string;
+        message?: string;
+      };
+
+      if (data.status !== "success") {
+        setError(data.message ?? "Signup failed.");
+        return;
+      }
+
+      registerUser({
+        username,
+        firstName,
+        lastName,
+        companyEmail,
+        companyName,
+        password,
+      });
+
+      setSuccessPopup(data.message ?? "User Signup Success");
+      setTimeout(() => {
+        router.push("/import");
+      }, 900);
+    } catch {
+      setError("Unable to reach signup server.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -136,6 +185,21 @@ export default function RegisterPage() {
               </div>
 
               <form className="space-y-4" onSubmit={handleSubmit}>
+                <div>
+                  <label className="form-label" htmlFor="username">
+                    Username
+                  </label>
+                  <input
+                    id="username"
+                    className="form-input"
+                    type="text"
+                    placeholder="client1"
+                    autoComplete="username"
+                    value={form.username}
+                    onChange={(event) => updateField("username", event.target.value)}
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="form-label" htmlFor="firstName">
@@ -233,7 +297,7 @@ export default function RegisterPage() {
                 {error ? <p className="text-xs text-red-500">{error}</p> : null}
 
                 <button type="submit" className="btn btn-primary w-full justify-center py-2.5">
-                  Create account
+                  {isSubmitting ? "Creating account..." : "Create account"}
                   <ArrowRight size={15} />
                 </button>
               </form>
@@ -248,6 +312,12 @@ export default function RegisterPage() {
           </div>
         </section>
       </div>
+
+      {successPopup ? (
+        <div className="fixed bottom-4 right-4 z-50 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 shadow-sm">
+          {successPopup}
+        </div>
+      ) : null}
     </main>
   );
 }
