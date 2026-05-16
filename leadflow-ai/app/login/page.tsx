@@ -2,24 +2,27 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
-import { ArrowRight, LockKeyhole, Mail, ShieldCheck, Zap } from "lucide-react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { ShieldCheck, Zap } from "lucide-react";
+
 import { useApp } from "@/context/AppContext";
+import {
+  AUTH_API,
+  isApiSuccess,
+  parseUserFromApi,
+  type LoginApiResponse,
+} from "@/lib/authApi";
 
 export default function LoginPage() {
   const router = useRouter();
-  const {
-    hasCompletedCsvImport,
-    isRegistered,
-    loginWithCredentials,
-    markAuthenticatedSession,
-  } = useApp();
-  const [email, setEmail] = useState("");
+  const { hasCompletedCsvImport, isRegistered, setLoginSession } = useApp();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [successPopup, setSuccessPopup] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [justRegistered, setJustRegistered] = useState(false);
+  const leftPanelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -27,21 +30,51 @@ export default function LoginPage() {
     setJustRegistered(params.get("registered") === "1");
   }, []);
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = leftPanelRef.current;
+    if (!el) return;
+    const { left, top, width, height } = el.getBoundingClientRect();
+    const x = ((e.clientX - left) / width - 0.5) * 24;
+    const y = ((e.clientY - top) / height - 0.5) * 24;
+    const orbs = el.querySelectorAll<HTMLElement>("[data-orb]");
+    orbs.forEach((orb, i) => {
+      const depth = (i + 1) * 7;
+      orb.style.transform = `translate(${(x * depth) / 10}px, ${(y * depth) / 10}px)`;
+    });
+  };
+
+  const handleMouseLeave = () => {
+    const el = leftPanelRef.current;
+    if (!el) return;
+    el.querySelectorAll<HTMLElement>("[data-orb]").forEach((orb) => {
+      orb.style.transform = "";
+    });
+  };
+
   async function handleCredentialsSignIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setSuccessPopup("");
+
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedUsername || !trimmedPassword) {
+      setError("Enter username and password.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("https://nuwin2003.app.n8n.cloud/webhook-test/auth/login", {
+      const response = await fetch(AUTH_API.login, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: email.trim(),
-          password: password.trim(),
+          username: trimmedUsername,
+          password: trimmedPassword,
         }),
       });
 
@@ -50,23 +83,22 @@ export default function LoginPage() {
         return;
       }
 
-      const data = (await response.json()) as {
-        status?: string;
-        message?: string;
-      };
+      const data = (await response.json()) as LoginApiResponse;
 
-      if (data.status !== "success") {
+      if (!isApiSuccess(data)) {
         setError(data.message ?? "Login failed.");
         return;
       }
 
-      const localCheck = loginWithCredentials(email, password);
-      if (!localCheck.ok) {
-        // If local registered profile isn't set yet, still allow webhook-authenticated session.
-        markAuthenticatedSession();
+      const profile = parseUserFromApi(data.user);
+      if (!profile) {
+        setError("Login succeeded but user profile was missing from the response.");
+        return;
       }
 
-      setSuccessPopup(data.message ?? "User Login Success");
+      setLoginSession(profile);
+
+      setSuccessPopup(data.message ?? "Login successful");
       setTimeout(() => {
         router.push(hasCompletedCsvImport ? "/dashboard" : "/import");
       }, 900);
@@ -78,136 +110,210 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
+    <main className="min-h-screen font-dm text-gray-900">
       <div className="grid min-h-screen lg:grid-cols-[1fr_480px]">
-        <section className="hidden bg-brand-900 px-10 py-12 text-white lg:flex lg:flex-col lg:justify-between">
-          <div className="flex items-center gap-3">
+        <section
+          ref={leftPanelRef}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+          className="relative hidden overflow-hidden px-10 py-12 text-white lg:flex lg:flex-col lg:justify-between"
+          style={{
+            background:
+              "linear-gradient(135deg, #020d1f 0%, #04183d 35%, #071f52 65%, #0a2d6e 100%)",
+          }}
+        >
+          <div
+            data-orb="1"
+            className="animate-drift-1 pointer-events-none absolute rounded-full"
+            style={{
+              width: "380px",
+              height: "380px",
+              top: "-80px",
+              right: "-100px",
+              background: "radial-gradient(circle, rgba(21,101,192,0.55) 0%, transparent 70%)",
+              filter: "blur(55px)",
+            }}
+          />
+          <div
+            data-orb="2"
+            className="animate-drift-2 pointer-events-none absolute rounded-full"
+            style={{
+              width: "280px",
+              height: "280px",
+              bottom: "30px",
+              left: "-50px",
+              background: "radial-gradient(circle, rgba(2,136,209,0.5) 0%, transparent 70%)",
+              filter: "blur(50px)",
+            }}
+          />
+          <div
+            data-orb="3"
+            className="animate-drift-3 pointer-events-none absolute rounded-full"
+            style={{
+              width: "180px",
+              height: "180px",
+              top: "50%",
+              left: "50%",
+              background: "radial-gradient(circle, rgba(249,168,37,0.2) 0%, transparent 70%)",
+              filter: "blur(40px)",
+            }}
+          />
+          <div className="grid-overlay pointer-events-none absolute inset-0" />
+
+          <div className="relative z-10 flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10">
               <Zap size={22} />
             </div>
             <div>
-              <p className="text-lg font-semibold leading-tight">LeadFlow AI</p>
-              <p className="text-xs text-white/60">B2B Sales Automation</p>
+              <p className="font-reglo text-xl font-bold leading-tight">LeadFlow AI</p>
+              <p className="font-dm text-sm text-white/60">B2B Sales Automation</p>
             </div>
           </div>
 
-          <div className="max-w-xl">
-            <p className="mb-4 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/75">
+          <div className="relative z-10 max-w-xl">
+            <p className="font-dm relative z-10 mb-4 inline-flex rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium text-white/75">
               Universal sales workspace
             </p>
-            <h1 className="text-4xl font-semibold leading-tight tracking-tight">
+            <h1 className="gradient-text-gold relative z-10 mb-4 font-reglo text-4xl font-bold leading-[1.12] lg:text-[2.75rem]">
               Sign in to manage campaigns, leads, and automation workflows.
             </h1>
-            <p className="mt-5 max-w-lg text-sm leading-6 text-white/65">
+            <p className="font-dm relative z-10 mt-5 max-w-lg text-base leading-7 text-white/65">
               Keep prospect data, campaign performance, and integration status in one
               secure dashboard.
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 text-xs text-white/65">
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <p className="mb-1 text-lg font-semibold text-white">312</p>
-              <p>Total leads</p>
+          <div className="relative z-10 grid grid-cols-3 gap-3">
+            <div
+              className="relative z-10 cursor-default rounded-xl p-4 transition-all duration-300 hover:-translate-y-1 hover:bg-white/10"
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "0.5px solid rgba(255,255,255,0.12)",
+                backdropFilter: "blur(12px)",
+              }}
+            >
+              <span className="gradient-text-gold font-reglo block text-3xl font-bold">312</span>
+              <span className="font-dm text-xs tracking-wide" style={{ color: "#78909c" }}>
+                Total leads
+              </span>
             </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <p className="mb-1 text-lg font-semibold text-white">8</p>
-              <p>Workflows</p>
+            <div
+              className="relative z-10 cursor-default rounded-xl p-4 transition-all duration-300 hover:-translate-y-1 hover:bg-white/10"
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "0.5px solid rgba(255,255,255,0.12)",
+                backdropFilter: "blur(12px)",
+              }}
+            >
+              <span className="gradient-text-gold font-reglo block text-3xl font-bold">8</span>
+              <span className="font-dm text-xs tracking-wide" style={{ color: "#78909c" }}>
+                Workflows
+              </span>
             </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <p className="mb-1 text-lg font-semibold text-white">34%</p>
-              <p>Open rate</p>
+            <div
+              className="relative z-10 cursor-default rounded-xl p-4 transition-all duration-300 hover:-translate-y-1 hover:bg-white/10"
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "0.5px solid rgba(255,255,255,0.12)",
+                backdropFilter: "blur(12px)",
+              }}
+            >
+              <span className="gradient-text-gold font-reglo block text-3xl font-bold">34%</span>
+              <span className="font-dm text-xs tracking-wide" style={{ color: "#78909c" }}>
+                Open rate
+              </span>
             </div>
           </div>
         </section>
 
-        <section className="flex items-center justify-center px-5 py-10 sm:px-8">
+        <section
+          className="flex items-center justify-center px-5 py-10 sm:px-8"
+          style={{ background: "#f0f4fb" }}
+        >
           <div className="w-full max-w-md">
             <div className="mb-8 flex items-center gap-3 lg:hidden">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 text-white">
                 <Zap size={20} />
               </div>
               <div>
-                <p className="text-base font-semibold leading-tight">LeadFlow AI</p>
-                <p className="text-xs text-gray-400">B2B Sales Automation</p>
+                <p className="font-reglo text-lg font-bold leading-tight">LeadFlow AI</p>
+                <p className="font-dm text-sm text-gray-500">B2B Sales Automation</p>
               </div>
             </div>
 
-            <div className="card p-6 shadow-sm sm:p-8">
+            <div
+              className="rounded-2xl bg-white p-8"
+              style={{ border: "0.5px solid #dde8f8" }}
+            >
               <div className="mb-7">
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
                   <ShieldCheck size={22} />
                 </div>
-                <h2 className="text-2xl font-semibold tracking-tight text-gray-900">
+                <h2 className="font-reglo text-3xl font-bold tracking-tight text-gray-900">
                   Welcome back
                 </h2>
-                <p className="mt-2 text-sm text-gray-400">
-                  Login with your username/email and password.
+                <p className="font-dm mt-2 text-base text-gray-500">
+                  Sign in with your username and password.
                 </p>
               </div>
 
-              <form className="space-y-4" onSubmit={handleCredentialsSignIn}>
+              <form className="font-dm" onSubmit={handleCredentialsSignIn}>
                 <div>
-                  <label className="form-label" htmlFor="email">
-                    Username or email
+                  <label className="form-label" htmlFor="username">
+                    Username
                   </label>
-                  <div className="group relative">
-                    <Mail
-                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 transition-opacity group-focus-within:opacity-0"
-                      size={16}
-                    />
-                    <input
-                      id="email"
-                      className="form-input pl-9 focus:placeholder-transparent"
-                      type="text"
-                      placeholder="client1 or name@company.com"
-                      autoComplete="username"
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                    />
-                  </div>
+                  <input
+                    id="username"
+                    className="form-input mb-4"
+                    type="text"
+                    placeholder="client2"
+                    autoComplete="username"
+                    value={username}
+                    onChange={(event) => setUsername(event.target.value)}
+                  />
                 </div>
 
                 <div>
                   <label className="form-label" htmlFor="password">
                     Password
                   </label>
-                  <div className="group relative">
-                    <LockKeyhole
-                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 transition-opacity group-focus-within:opacity-0"
-                      size={16}
-                    />
-                    <input
-                      id="password"
-                      className="form-input pl-9 focus:placeholder-transparent"
-                      type="password"
-                      placeholder="Enter password"
-                      autoComplete="current-password"
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                    />
-                  </div>
+                  <input
+                    id="password"
+                    className="form-input mb-4"
+                    type="password"
+                    placeholder="Enter password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                  />
                 </div>
 
-                <button type="submit" className="btn btn-primary w-full justify-center py-2.5">
-                  {isSubmitting ? "Logging in..." : "Login"}
-                  <ArrowRight size={15} />
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn btn-primary btn-lg font-reglo w-full tracking-wide"
+                >
+                  {isSubmitting ? "Logging in..." : "Login →"}
                 </button>
               </form>
 
-              {error ? <p className="mt-4 text-xs text-red-500">{error}</p> : null}
+              {error ? <p className="font-dm mt-4 text-sm text-red-500">{error}</p> : null}
 
-              <p className="mt-5 rounded-lg bg-gray-50 px-3 py-2 text-center text-xs text-gray-400">
+              <p className="font-dm mt-5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-center text-sm text-gray-600">
                 {justRegistered
-                  ? "Account created successfully. Please login to continue."
+                  ? "Account created successfully. Please sign in to continue."
                   : isRegistered
-                    ? "Registered users can login using username/email and password."
-                    : "Create your account first, then login with your credentials."}
+                    ? "Sign in with your registered username and password."
+                    : "Create your account first, then sign in with your credentials."}
               </p>
             </div>
 
-            <p className="mt-5 text-center text-xs text-gray-400">
+            <p className="font-dm mt-5 text-center text-sm text-gray-500">
               First time here?{" "}
-              <Link className="font-medium text-brand-600 hover:text-brand-800" href="/register">
+              <Link
+                className="font-medium text-brand-600 hover:text-brand-800"
+                href="/register"
+              >
                 Add your company details
               </Link>
             </p>
@@ -216,7 +322,7 @@ export default function LoginPage() {
       </div>
 
       {successPopup ? (
-        <div className="fixed bottom-4 right-4 z-50 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 shadow-sm">
+        <div className="font-dm fixed bottom-4 right-4 z-50 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 shadow-sm">
           {successPopup}
         </div>
       ) : null}

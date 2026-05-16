@@ -1,0 +1,1 @@
+{"sessionId":"e4fbdc","runId":"run-1","hypothesisId":"H7","location":"app/login/page.tsx:password:onFocus","message":"input-visual-state","data":{"phase":"focus","inputId":"password","valueLength":4,"placeholderShown":false,"placeholderOpacity":"0","placeholderColor":"rgb(156, 163, 175)"},"timestamp":1778964570937}

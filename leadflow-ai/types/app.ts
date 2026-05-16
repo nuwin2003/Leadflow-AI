@@ -58,7 +58,6 @@ export interface RegisteredUserProfile {
   lastName: string;
   companyEmail: string;
   companyName: string;
-  password: string;
 }
 
 export interface Campaign {
@@ -112,4 +111,17 @@ export interface WebhookEntry {
   name: string;
   trigger: string;
   status: LeadStatus;
+}
+
+export interface EmailLogEntry {
+  id: string;
+  createdTime: string;
+  status: string;
+  toEmail: string;
+  subject: string;
+  sentAt?: string;
+  openedAt?: string;
+  workflowName?: string;
+  errorMessage?: string;
+  url?: string;
 }

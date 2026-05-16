@@ -23,14 +23,14 @@ export default function Topbar() {
   const title = PAGE_TITLES[pathname] ?? "LeadFlow AI";
 
   return (
-    <header className="h-14 bg-white border-b border-gray-100 flex items-center justify-between px-6 flex-shrink-0">
+    <header className="flex h-16 flex-shrink-0 items-center justify-between border-b border-gray-100 bg-white px-6">
       <div>
-        <h1 className="text-[15px] font-semibold text-gray-900 leading-tight">{title}</h1>
-        <p className="text-[11px] text-gray-400">Universal B2B Sales Automation · Version 1.0.0</p>
+        <h1 className="font-reglo text-lg font-bold leading-tight text-gray-900">{title}</h1>
+        <p className="text-sm text-gray-400">Universal B2B Sales Automation · Version 1.0.0</p>
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="rounded-md bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600">
+        <span className="rounded-md bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-600">
           {userProfile?.companyName ?? "Client Workspace"}
         </span>
 

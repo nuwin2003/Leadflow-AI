@@ -88,13 +88,13 @@ export default function Sidebar() {
           <Zap size={16} className="text-white" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-gray-900 leading-tight">LeadFlow AI</p>
-          <p className="text-[10px] text-gray-400 leading-tight">B2B Sales Automation</p>
+          <p className="font-reglo text-base font-bold leading-tight text-gray-900">LeadFlow AI</p>
+          <p className="text-xs text-gray-400 leading-tight">B2B Sales Automation</p>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-2.5 pt-4">
-        <p className="text-[10px] font-medium text-gray-300 uppercase tracking-widest px-2 mb-2">
+        <p className="mb-2 px-2 text-xs font-medium uppercase tracking-widest text-gray-300">
           Main
         </p>
         <nav className="flex flex-col gap-0.5 mb-4">
@@ -130,8 +130,8 @@ export default function Sidebar() {
             <span className="text-[11px] font-semibold text-brand-600">{profileInitials}</span>
           </div>
           <div className="flex-1 text-left min-w-0">
-            <p className="text-[13px] font-medium text-gray-800 truncate">{profileName}</p>
-            <p className="text-[10px] text-gray-400 truncate">{profileCompany}</p>
+            <p className="truncate text-sm font-medium text-gray-800">{profileName}</p>
+            <p className="truncate text-xs text-gray-400">{profileCompany}</p>
           </div>
           <MoreHorizontal size={14} className="text-gray-400 flex-shrink-0" />
         </button>

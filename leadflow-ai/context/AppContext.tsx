@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
+import { sanitizeStoredProfile } from "@/lib/authApi";
 import { INTEGRATIONS_DEFAULT, TENANT_CONFIGS } from "@/data/mockData";
 import type {
   Integration,
@@ -44,8 +45,7 @@ interface AppContextValue {
   leads: Lead[];
   pendingImportLeads: Lead[];
   registerUser: (profile: RegisteredUserProfile) => void;
-  loginWithCredentials: (email: string, password: string) => { ok: boolean; error?: string };
-  markAuthenticatedSession: () => void;
+  setLoginSession: (profile: RegisteredUserProfile) => void;
   logoutUser: () => void;
   updateUserProfile: (profile: RegisteredUserProfile) => void;
   setPendingImportLeads: (leads: Lead[]) => void;
@@ -73,7 +73,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         const parsed = JSON.parse(raw) as PersistedAppState;
         setPersistedState({
-          userProfile: parsed.userProfile ?? null,
+          userProfile: sanitizeStoredProfile(parsed.userProfile),
           isRegistered: parsed.isRegistered ?? false,
           isAuthenticated: parsed.isAuthenticated ?? false,
           hasCompletedCsvImport: parsed.hasCompletedCsvImport ?? false,
@@ -108,32 +108,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
   }
 
-  function loginWithCredentials(
-    email: string,
-    password: string,
-  ): { ok: boolean; error?: string } {
-    const normalizedLogin = email.trim().toLowerCase();
-    const normalizedPassword = password.trim();
-    if (!normalizedLogin || !normalizedPassword) {
-      return { ok: false, error: "Enter username/email and password." };
-    }
-    if (!persistedState.userProfile || !persistedState.isRegistered) {
-      return { ok: false, error: "No registered user found. Please register first." };
-    }
-    const emailMatch = normalizedLogin === persistedState.userProfile.companyEmail.toLowerCase();
-    const usernameMatch = normalizedLogin === persistedState.userProfile.username.toLowerCase();
-    if (!emailMatch && !usernameMatch) {
-      return { ok: false, error: "Username/email does not match registered account." };
-    }
-    if (normalizedPassword !== persistedState.userProfile.password) {
-      return { ok: false, error: "Incorrect password." };
-    }
-    setPersistedState((prev) => ({ ...prev, isAuthenticated: true }));
-    return { ok: true };
-  }
-
-  function markAuthenticatedSession() {
-    setPersistedState((prev) => ({ ...prev, isAuthenticated: true }));
+  function setLoginSession(profile: RegisteredUserProfile) {
+    setPersistedState((prev) => ({
+      ...prev,
+      userProfile: profile,
+      isRegistered: true,
+      isAuthenticated: true,
+    }));
   }
 
   function logoutUser() {
@@ -192,8 +173,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       leads,
       pendingImportLeads,
       registerUser,
-      loginWithCredentials,
-      markAuthenticatedSession,
+      setLoginSession,
       logoutUser,
       updateUserProfile,
       setPendingImportLeads,

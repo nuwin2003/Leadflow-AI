@@ -4,6 +4,13 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useApp } from "@/context/AppContext";
+import {
+  AUTH_API,
+  isApiSuccess,
+  parseUserFromApi,
+  toProfileUpdatePayload,
+  type ProfileUpdateApiResponse,
+} from "@/lib/authApi";
 import type { RegisteredUserProfile } from "@/types/app";
 
 const EMPTY_PROFILE: RegisteredUserProfile = {
@@ -12,7 +19,6 @@ const EMPTY_PROFILE: RegisteredUserProfile = {
   lastName: "",
   companyEmail: "",
   companyName: "",
-  password: "",
 };
 
 export default function ProfilePage() {
@@ -21,6 +27,7 @@ export default function ProfilePage() {
   const [form, setForm] = useState<RegisteredUserProfile>(userProfile ?? EMPTY_PROFILE);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setForm(userProfile ?? EMPTY_PROFILE);
@@ -33,44 +40,74 @@ export default function ProfilePage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError("");
+    setSuccess("");
+
     const normalized: RegisteredUserProfile = {
       username: form.username.trim(),
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
       companyEmail: form.companyEmail.trim().toLowerCase(),
       companyName: form.companyName.trim(),
-      password: form.password.trim(),
     };
+
     if (
       !normalized.username ||
       !normalized.firstName ||
       !normalized.lastName ||
       !normalized.companyEmail ||
-      !normalized.companyName ||
-      !normalized.password
+      !normalized.companyName
     ) {
       setError("All profile fields are required.");
-      setSuccess("");
       return;
     }
+
     if (!normalized.companyEmail.includes("@")) {
       setError("Enter a valid company email.");
-      setSuccess("");
       return;
     }
-    updateUserProfile(normalized);
-    setError("");
-    setSuccess("Profile updated successfully.");
-    router.refresh();
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(AUTH_API.profileUpdate, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(toProfileUpdatePayload(normalized)),
+      });
+
+      if (!response.ok) {
+        setError("Profile update request failed. Please try again.");
+        return;
+      }
+
+      const data = (await response.json()) as ProfileUpdateApiResponse;
+
+      if (!isApiSuccess(data)) {
+        setError(data.message ?? "Profile update failed.");
+        return;
+      }
+
+      const updatedProfile = parseUserFromApi(data.user) ?? normalized;
+      updateUserProfile(updatedProfile);
+      setSuccess(data.message ?? "Profile updated successfully.");
+      router.refresh();
+    } catch {
+      setError("Unable to reach profile update server.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
     <div className="mx-auto max-w-2xl">
       <div className="card p-6 sm:p-8">
-        <h2 className="text-lg font-semibold text-gray-900">Edit Profile</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <h2 className="font-reglo text-2xl font-bold text-gray-900">Edit Profile</h2>
+        <p className="mt-1 text-base text-gray-500">
           Update your user details and company information shown in the sidebar.
         </p>
 
@@ -136,25 +173,11 @@ export default function ProfilePage() {
               onChange={(event) => updateField("companyName", event.target.value)}
             />
           </div>
-
-          <div>
-            <label className="form-label" htmlFor="password">
-              Password
-            </label>
-            <input
-              id="password"
-              className="form-input"
-              type="password"
-              value={form.password}
-              onChange={(event) => updateField("password", event.target.value)}
-            />
-          </div>
-
-          {error ? <p className="text-xs text-red-500">{error}</p> : null}
+{error ? <p className="text-xs text-red-500">{error}</p> : null}
           {success ? <p className="text-xs text-emerald-600">{success}</p> : null}
 
-          <button type="submit" className="btn btn-primary py-2.5">
-            Save Profile
+          <button type="submit" className="btn btn-primary btn-lg" disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : "Save Profile"}
           </button>
         </form>
       </div>
