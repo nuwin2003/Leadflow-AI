@@ -8,6 +8,7 @@ import type { ViewMode } from "@/types/app";
 
 const PAGE_TITLES: Record<string, string> = {
   "/": "Dashboard",
+  "/dashboard": "Dashboard",
   "/leads": "Leads",
   "/campaigns": "Campaigns",
   "/integrations": "Integrations",
@@ -24,7 +25,7 @@ export default function Topbar() {
 
   function handleMode(mode: ViewMode) {
     switchView(mode);
-    router.push(mode === "admin" ? "/admin" : "/");
+    router.push(mode === "admin" ? "/admin" : "/dashboard");
   }
 
   return (
@@ -59,6 +60,7 @@ export default function Topbar() {
           <Play size={12} />
           Run Workflow
         </button>
+
       </div>
     </header>
   );

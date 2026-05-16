@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   BarChart2,
   ChevronRight,
   LayoutDashboard,
+  LogOut,
   Megaphone,
+  MoreHorizontal,
   Plug,
   Settings,
   ShieldCheck,
@@ -22,7 +25,7 @@ interface NavItem {
 }
 
 const NAV_MAIN: NavItem[] = [
-  { href: "/", label: "Dashboard", Icon: LayoutDashboard },
+  { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { href: "/leads", label: "Leads", Icon: Users },
   { href: "/campaigns", label: "Campaigns", Icon: Megaphone },
   { href: "/integrations", label: "Integrations", Icon: Plug },
@@ -36,9 +39,11 @@ const NAV_CONFIG: NavItem[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [openProfileMenu, setOpenProfileMenu] = useState(false);
 
   function isActive(href: string): boolean {
-    if (href === "/") return pathname === "/";
+    if (href === "/dashboard") return pathname === "/dashboard" || pathname === "/";
     return pathname === href || pathname.startsWith(`${href}/`);
   }
 
@@ -54,6 +59,11 @@ export default function Sidebar() {
         {active && <ChevronRight size={13} className="ml-auto opacity-40" />}
       </Link>
     );
+  }
+
+  function handleLogout() {
+    setOpenProfileMenu(false);
+    router.push("/login");
   }
 
   return (
@@ -88,8 +98,12 @@ export default function Sidebar() {
         </nav>
       </div>
 
-      <div className="px-2.5 py-3 border-t border-gray-100">
-        <button className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+      <div className="relative px-2.5 py-3 border-t border-gray-100">
+        <button
+          className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+          onClick={() => setOpenProfileMenu((prev) => !prev)}
+          aria-label="Open profile actions"
+        >
           <div className="w-7 h-7 rounded-full bg-brand-50 flex items-center justify-center flex-shrink-0">
             <span className="text-[11px] font-semibold text-brand-600">AC</span>
           </div>
@@ -97,8 +111,20 @@ export default function Sidebar() {
             <p className="text-[13px] font-medium text-gray-800 truncate">Admin Client</p>
             <p className="text-[10px] text-gray-400">client_001</p>
           </div>
-          <ChevronRight size={13} className="text-gray-300 flex-shrink-0" />
+          <MoreHorizontal size={14} className="text-gray-400 flex-shrink-0" />
         </button>
+
+        {openProfileMenu ? (
+          <div className="absolute bottom-[64px] left-2.5 right-2.5 rounded-lg border border-gray-200 bg-white p-1.5 shadow-md">
+            <button
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-medium text-red-600 hover:bg-red-50"
+              onClick={handleLogout}
+            >
+              <LogOut size={13} />
+              Logout
+            </button>
+          </div>
+        ) : null}
       </div>
     </aside>
   );
