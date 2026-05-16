@@ -13,6 +13,7 @@ import {
   MoreHorizontal,
   Plug,
   Settings,
+  SquarePen,
   ShieldCheck,
   Users,
   Zap,
@@ -68,6 +69,11 @@ export default function Sidebar() {
     setOpenProfileMenu(false);
     logoutUser();
     router.push("/login");
+  }
+
+  function handleEditProfile() {
+    setOpenProfileMenu(false);
+    router.push("/profile");
   }
 
   const profileInitials = `${userProfile?.firstName?.[0] ?? "A"}${userProfile?.lastName?.[0] ?? "C"}`;
@@ -134,6 +140,13 @@ export default function Sidebar() {
 
         {openProfileMenu ? (
           <div className="absolute bottom-[64px] left-2.5 right-2.5 rounded-lg border border-gray-200 bg-white p-1.5 shadow-md">
+            <button
+              className="mb-1 flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-medium text-gray-700 hover:bg-gray-100"
+              onClick={handleEditProfile}
+            >
+              <SquarePen size={13} />
+              Edit profile
+            </button>
             <button
               className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-medium text-red-600 hover:bg-red-50"
               onClick={handleLogout}

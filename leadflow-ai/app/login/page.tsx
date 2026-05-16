@@ -2,13 +2,22 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { ShieldCheck, Zap } from "lucide-react";
+import { FormEvent, useEffect, useState } from "react";
+import { ArrowRight, LockKeyhole, Mail, ShieldCheck, Zap } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { hasCompletedCsvImport, isAuthenticated, isHydrated, loginWithGoogle } = useApp();
+  const {
+    hasCompletedCsvImport,
+    isAuthenticated,
+    isHydrated,
+    isRegistered,
+    loginWithCredentials,
+    loginWithGoogle,
+  } = useApp();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -20,6 +29,17 @@ export default function LoginPage() {
     const result = loginWithGoogle();
     setError("");
     router.push(result.needsProfile ? "/register" : "/import");
+  }
+
+  function handleCredentialsSignIn(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const result = loginWithCredentials(email, password);
+    if (!result.ok) {
+      setError(result.error ?? "Unable to login.");
+      return;
+    }
+    setError("");
+    router.push(hasCompletedCsvImport ? "/dashboard" : "/import");
   }
 
   return (
@@ -102,10 +122,69 @@ export default function LoginPage() {
                 Continue with Gmail
               </button>
 
+              <div className="my-6 flex items-center gap-3">
+                <div className="h-px flex-1 bg-gray-100" />
+                <span className="text-xs font-medium uppercase tracking-wider text-gray-300">
+                  or
+                </span>
+                <div className="h-px flex-1 bg-gray-100" />
+              </div>
+
+              <form className="space-y-4" onSubmit={handleCredentialsSignIn}>
+                <div>
+                  <label className="form-label" htmlFor="email">
+                    Email address
+                  </label>
+                  <div className="group relative">
+                    <Mail
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 transition-opacity group-focus-within:opacity-0"
+                      size={16}
+                    />
+                    <input
+                      id="email"
+                      className="form-input pl-9 focus:placeholder-transparent"
+                      type="email"
+                      placeholder="name@company.com"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="form-label" htmlFor="password">
+                    Password
+                  </label>
+                  <div className="group relative">
+                    <LockKeyhole
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 transition-opacity group-focus-within:opacity-0"
+                      size={16}
+                    />
+                    <input
+                      id="password"
+                      className="form-input pl-9 focus:placeholder-transparent"
+                      type="password"
+                      placeholder="Enter password"
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <button type="submit" className="btn btn-primary w-full justify-center py-2.5">
+                  Login
+                  <ArrowRight size={15} />
+                </button>
+              </form>
+
               {error ? <p className="mt-4 text-xs text-red-500">{error}</p> : null}
 
               <p className="mt-5 rounded-lg bg-gray-50 px-3 py-2 text-center text-xs text-gray-400">
-                Google authentication is mocked for now. n8n integration will be connected later.
+                {isRegistered
+                  ? "Registered users can login with email/password or Google."
+                  : "Google authentication is mocked for now. n8n integration will be connected later."}
               </p>
             </div>
 

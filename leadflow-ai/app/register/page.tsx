@@ -61,6 +61,7 @@ export default function RegisterPage() {
       lastName,
       companyEmail,
       companyName,
+      password,
     });
 
     setError("");

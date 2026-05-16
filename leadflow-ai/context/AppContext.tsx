@@ -48,9 +48,12 @@ interface AppContextValue {
   pendingImportLeads: Lead[];
   registerUser: (profile: RegisteredUserProfile) => void;
   loginWithGoogle: () => { ok: boolean; needsProfile: boolean };
+  loginWithCredentials: (email: string, password: string) => { ok: boolean; error?: string };
   logoutUser: () => void;
+  updateUserProfile: (profile: RegisteredUserProfile) => void;
   setPendingImportLeads: (leads: Lead[]) => void;
   completeCsvImport: (leads: Lead[]) => void;
+  clearCsvImport: () => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -123,8 +126,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return { ok: true, needsProfile };
   }
 
+  function loginWithCredentials(
+    email: string,
+    password: string,
+  ): { ok: boolean; error?: string } {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+    if (!normalizedEmail || !normalizedPassword) {
+      return { ok: false, error: "Enter email and password." };
+    }
+    if (!persistedState.userProfile || !persistedState.isRegistered) {
+      return { ok: false, error: "No registered user found. Please register first." };
+    }
+    if (normalizedEmail !== persistedState.userProfile.companyEmail.toLowerCase()) {
+      return { ok: false, error: "Email does not match registered company email." };
+    }
+    if (normalizedPassword !== persistedState.userProfile.password) {
+      return { ok: false, error: "Incorrect password." };
+    }
+    setPersistedState((prev) => ({ ...prev, isAuthenticated: true }));
+    return { ok: true };
+  }
+
   function logoutUser() {
     setPersistedState((prev) => ({ ...prev, isAuthenticated: false }));
+  }
+
+  function updateUserProfile(profile: RegisteredUserProfile) {
+    setPersistedState((prev) => ({
+      ...prev,
+      userProfile: profile,
+      isRegistered: true,
+    }));
   }
 
   function setPendingImportLeads(leads: Lead[]) {
@@ -140,6 +173,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ...prev,
       importedLeads: leads,
       hasCompletedCsvImport: true,
+    }));
+  }
+
+  function clearCsvImport() {
+    setPersistedState((prev) => ({
+      ...prev,
+      importedLeads: [],
+      hasCompletedCsvImport: false,
     }));
   }
 
@@ -166,9 +207,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       pendingImportLeads,
       registerUser,
       loginWithGoogle,
+      loginWithCredentials,
       logoutUser,
+      updateUserProfile,
       setPendingImportLeads,
       completeCsvImport,
+      clearCsvImport,
     }),
     [
       currentTenant,

@@ -88,7 +88,13 @@ function buildLeadFromRecord(record: Record<string, string>, index: number): Lea
 }
 
 export default function ImportPage() {
-  const { completeCsvImport, hasCompletedCsvImport, pendingImportLeads, setPendingImportLeads } = useApp();
+  const {
+    clearCsvImport,
+    completeCsvImport,
+    hasCompletedCsvImport,
+    pendingImportLeads,
+    setPendingImportLeads,
+  } = useApp();
   const [uploading, setUploading] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState("");
   const [error, setError] = useState("");
@@ -178,6 +184,15 @@ export default function ImportPage() {
     );
   }
 
+  function handleRemoveCsv() {
+    clearCsvImport();
+    setPendingImportLeads([]);
+    setPreviewRows([]);
+    setSelectedFileName("");
+    setError("");
+    setSuccess("CSV data removed successfully.");
+  }
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="card p-6 sm:p-8">
@@ -226,14 +241,24 @@ export default function ImportPage() {
         ) : null}
 
         <div className="mt-4">
-          <button
-            type="button"
-            className="btn btn-primary py-2.5"
-            onClick={handleSubmitToN8n}
-            disabled={uploading}
-          >
-            Submit CSV to n8n
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="btn btn-primary py-2.5"
+              onClick={handleSubmitToN8n}
+              disabled={uploading}
+            >
+              Submit CSV to n8n
+            </button>
+            <button
+              type="button"
+              className="btn py-2.5 text-red-600 hover:bg-red-50"
+              onClick={handleRemoveCsv}
+              disabled={uploading || previewRows.length === 0}
+            >
+              Remove CSV
+            </button>
+          </div>
         </div>
 
         <p className="mt-5 text-xs text-gray-400">

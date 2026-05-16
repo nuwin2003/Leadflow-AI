@@ -1,6 +1,7 @@
 export type AppPageId =
   | "dashboard"
   | "import"
+  | "profile"
   | "leads"
   | "campaigns"
   | "integrations"
@@ -59,6 +60,7 @@ export interface RegisteredUserProfile {
   lastName: string;
   companyEmail: string;
   companyName: string;
+  password: string;
 }
 
 export interface Campaign {
