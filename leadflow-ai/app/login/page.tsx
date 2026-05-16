@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { ArrowRight, LockKeyhole, Mail, ShieldCheck, Zap } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
@@ -12,7 +12,6 @@ export default function LoginPage() {
     hasCompletedCsvImport,
     isRegistered,
     loginWithCredentials,
-    loginWithGoogle,
     markAuthenticatedSession,
   } = useApp();
   const [email, setEmail] = useState("");
@@ -20,12 +19,13 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [successPopup, setSuccessPopup] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [justRegistered, setJustRegistered] = useState(false);
 
-  function handleGoogleSignIn() {
-    const result = loginWithGoogle();
-    setError("");
-    router.push(result.needsProfile ? "/register" : "/import");
-  }
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    setJustRegistered(params.get("registered") === "1");
+  }, []);
 
   async function handleCredentialsSignIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -141,28 +141,8 @@ export default function LoginPage() {
                   Welcome back
                 </h2>
                 <p className="mt-2 text-sm text-gray-400">
-                  Continue with Google to access your LeadFlow AI workspace.
+                  Login with your username/email and password.
                 </p>
-              </div>
-
-              <button
-                type="button"
-                className="btn w-full justify-center gap-2 py-2.5"
-                aria-label="Continue with Google"
-                onClick={handleGoogleSignIn}
-              >
-                <span className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-700">
-                  G
-                </span>
-                Continue with Gmail
-              </button>
-
-              <div className="my-6 flex items-center gap-3">
-                <div className="h-px flex-1 bg-gray-100" />
-                <span className="text-xs font-medium uppercase tracking-wider text-gray-300">
-                  or
-                </span>
-                <div className="h-px flex-1 bg-gray-100" />
               </div>
 
               <form className="space-y-4" onSubmit={handleCredentialsSignIn}>
@@ -217,9 +197,11 @@ export default function LoginPage() {
               {error ? <p className="mt-4 text-xs text-red-500">{error}</p> : null}
 
               <p className="mt-5 rounded-lg bg-gray-50 px-3 py-2 text-center text-xs text-gray-400">
-                {isRegistered
-                  ? "Registered users can login with email/password or Google."
-                  : "Google authentication is mocked for now. n8n integration will be connected later."}
+                {justRegistered
+                  ? "Account created successfully. Please login to continue."
+                  : isRegistered
+                    ? "Registered users can login using username/email and password."
+                    : "Create your account first, then login with your credentials."}
               </p>
             </div>
 

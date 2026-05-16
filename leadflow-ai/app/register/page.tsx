@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { ArrowRight, Building2, Mail, ShieldCheck, UserCircle2, Zap } from "lucide-react";
 
 import { useApp } from "@/context/AppContext";
@@ -27,16 +27,11 @@ const INITIAL_STATE: FormState = {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { isRegistered, registerUser } = useApp();
+  const { registerUser } = useApp();
   const [form, setForm] = useState<FormState>(INITIAL_STATE);
   const [error, setError] = useState("");
   const [successPopup, setSuccessPopup] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (!isRegistered) return;
-    router.replace("/login");
-  }, [isRegistered, router]);
 
   function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -108,7 +103,7 @@ export default function RegisterPage() {
 
       setSuccessPopup(data.message ?? "User Signup Success");
       setTimeout(() => {
-        router.push("/import");
+        router.replace("/login?registered=1");
       }, 900);
     } catch {
       setError("Unable to reach signup server.");
@@ -306,7 +301,7 @@ export default function RegisterPage() {
             <p className="mt-5 text-center text-xs text-gray-400">
               Already have an account?{" "}
               <Link className="font-medium text-brand-600 hover:text-brand-800" href="/login">
-                Continue with Google
+                Login now
               </Link>
             </p>
           </div>

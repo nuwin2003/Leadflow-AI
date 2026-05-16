@@ -44,7 +44,6 @@ interface AppContextValue {
   leads: Lead[];
   pendingImportLeads: Lead[];
   registerUser: (profile: RegisteredUserProfile) => void;
-  loginWithGoogle: () => { ok: boolean; needsProfile: boolean };
   loginWithCredentials: (email: string, password: string) => { ok: boolean; error?: string };
   markAuthenticatedSession: () => void;
   logoutUser: () => void;
@@ -105,18 +104,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ...prev,
       userProfile: profile,
       isRegistered: true,
-      isAuthenticated: true,
+      isAuthenticated: false,
     }));
-  }
-
-  function loginWithGoogle(): { ok: boolean; needsProfile: boolean } {
-    const needsProfile = !persistedState.userProfile;
-    setPersistedState((prev) => ({
-      ...prev,
-      isAuthenticated: true,
-      isRegistered: !needsProfile || prev.isRegistered,
-    }));
-    return { ok: true, needsProfile };
   }
 
   function loginWithCredentials(
@@ -203,7 +192,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       leads,
       pendingImportLeads,
       registerUser,
-      loginWithGoogle,
       loginWithCredentials,
       markAuthenticatedSession,
       logoutUser,
