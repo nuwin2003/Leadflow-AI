@@ -15,7 +15,7 @@ import {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { hasCompletedCsvImport, isRegistered, setLoginSession } = useApp();
+  const { hasCompletedCsvImport, isRegistered, setLoginSession, userProfile } = useApp();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -65,6 +65,8 @@ export default function LoginPage() {
     }
 
     setIsSubmitting(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
       const response = await fetch(AUTH_API.login, {
@@ -72,25 +74,44 @@ export default function LoginPage() {
         headers: {
           "Content-Type": "application/json",
         },
+        signal: controller.signal,
         body: JSON.stringify({
           username: trimmedUsername,
           password: trimmedPassword,
         }),
       });
 
-      if (!response.ok) {
-        setError("Login request failed. Please try again.");
-        return;
+      const text = await response.text();
+      let data: LoginApiResponse = {};
+      try {
+        data = text ? (JSON.parse(text) as LoginApiResponse) : {};
+      } catch {
+        data = { message: text };
       }
 
-      const data = (await response.json()) as LoginApiResponse;
+      if (!response.ok) {
+        setError(data.message ?? `Login request failed (${response.status}).`);
+        return;
+      }
 
       if (!isApiSuccess(data)) {
         setError(data.message ?? "Login failed.");
         return;
       }
 
-      const profile = parseUserFromApi(data.user);
+      const profile =
+        parseUserFromApi(data.user) ??
+        (userProfile
+          ? {
+              username: String(data.user?.username ?? userProfile.username).trim(),
+              firstName: String(data.user?.firstName ?? userProfile.firstName).trim(),
+              lastName: String(data.user?.lastName ?? userProfile.lastName).trim(),
+              companyEmail: String(data.user?.email ?? userProfile.companyEmail)
+                .trim()
+                .toLowerCase(),
+              companyName: String(data.user?.companyName ?? userProfile.companyName).trim(),
+            }
+          : null);
       if (!profile) {
         setError("Login succeeded but user profile was missing from the response.");
         return;
@@ -102,9 +123,14 @@ export default function LoginPage() {
       setTimeout(() => {
         router.push(hasCompletedCsvImport ? "/dashboard" : "/import");
       }, 900);
-    } catch {
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setError("Login request timed out. Please try again.");
+        return;
+      }
       setError("Unable to reach login server.");
     } finally {
+      clearTimeout(timeoutId);
       setIsSubmitting(false);
     }
   }
@@ -314,7 +340,7 @@ export default function LoginPage() {
                 className="font-medium text-brand-600 hover:text-brand-800"
                 href="/register"
               >
-                Add your company details
+                Register User Company
               </Link>
             </p>
           </div>
