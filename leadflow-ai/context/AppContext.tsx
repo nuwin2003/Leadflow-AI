@@ -3,7 +3,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 import { sanitizeStoredProfile } from "@/lib/authApi";
-import { INTEGRATIONS_DEFAULT, TENANT_CONFIGS } from "@/data/mockData";
 import type {
   Integration,
   Lead,
@@ -27,6 +26,31 @@ const DEFAULT_PERSISTED_STATE: PersistedAppState = {
   isAuthenticated: false,
   hasCompletedCsvImport: false,
   importedLeads: [],
+};
+
+const DEFAULT_INTEGRATIONS: Integration[] = [
+  {
+    key: "n8n",
+    name: "n8n",
+    icon: "database",
+    color: "#E6F1FB",
+    iconColor: "#185FA5",
+    connected: true,
+  },
+  {
+    key: "gmail",
+    name: "Gmail",
+    icon: "mail",
+    color: "#FCEBEB",
+    iconColor: "#A32D2D",
+    connected: true,
+  },
+];
+
+const DEFAULT_TENANT_CONFIG: TenantConfig = {
+  label: "All Users",
+  used: 0,
+  max: 100,
 };
 
 interface AppContextValue {
@@ -58,13 +82,16 @@ const AppContext = createContext<AppContextValue | null>(null);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentTenant, setCurrentTenant] = useState<string>("all");
   const [integrations, setIntegrations] =
-    useState<Integration[]>(INTEGRATIONS_DEFAULT);
+    useState<Integration[]>(DEFAULT_INTEGRATIONS);
   const [dailyLimit, setDailyLimit] = useState<number>(50);
   const [persistedState, setPersistedState] =
     useState<PersistedAppState>(DEFAULT_PERSISTED_STATE);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  const tenantConfig = TENANT_CONFIGS[currentTenant] || TENANT_CONFIGS.all;
+  const tenantConfig =
+    currentTenant === "all"
+      ? { ...DEFAULT_TENANT_CONFIG, used: Math.min(persistedState.importedLeads.length, 100) }
+      : DEFAULT_TENANT_CONFIG;
 
   useEffect(() => {
     if (typeof window === "undefined") return;

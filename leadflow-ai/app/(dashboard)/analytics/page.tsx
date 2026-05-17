@@ -10,11 +10,9 @@ import {
   YAxis,
 } from "recharts";
 
-import { TREND_DATA } from "@/data/mockData";
-
-const chartData = TREND_DATA.labels.map((label, i) => ({
-  day: label,
-  sent: TREND_DATA.values[i],
+const chartData = Array.from({ length: 14 }, (_, i) => ({
+  day: `Day ${i + 1}`,
+  sent: 0,
 }));
 
 function StatCard({

@@ -7,10 +7,9 @@ import { MoreHorizontal, Plus } from "lucide-react";
 import CampaignTable from "@/components/CampaignTable";
 import GaugeChart from "@/components/GaugeChart";
 import IntegrationsList from "@/components/IntegrationsList";
-import { CAMPAIGNS, TENANT_CONFIGS } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { AUTH_API, parseEmailLogsFromApi } from "@/lib/authApi";
-import type { EmailLogEntry } from "@/types/app";
+import type { Campaign, EmailLogEntry } from "@/types/app";
 
 function MetricCard({
   label,
@@ -33,8 +32,8 @@ function MetricCard({
 }
 
 export default function DashboardPage() {
-  const { currentTenant, hasCompletedCsvImport, setCurrentTenant, leads } = useApp();
-  const tenantCfg = TENANT_CONFIGS[currentTenant] || TENANT_CONFIGS.all;
+  const { currentTenant, hasCompletedCsvImport, setCurrentTenant, leads, tenantConfig } = useApp();
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const csvLeadCount = leads.filter((lead) => lead.source === "csv_upload").length;
   const weeklyLeads = Math.min(leads.length, 50);
   const hasData = hasCompletedCsvImport && leads.length > 0;
@@ -88,6 +87,22 @@ export default function DashboardPage() {
     };
   }, []);
 
+  useEffect(() => {
+    setCampaigns(
+      leads.slice(0, 10).map((lead, index) => ({
+        id: index + 1,
+        name: `${lead.company} Outreach`,
+        source: lead.source.replace("_", " "),
+        status: lead.status,
+        leads: 1,
+        sent: lead.status === "email_sent" ? 1 : 0,
+        openRate: 0,
+        replyRate: 0,
+        campaign_id: `generated_${lead.id}`,
+      })),
+    );
+  }, [leads]);
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-4 gap-3">
@@ -127,7 +142,7 @@ export default function DashboardPage() {
               <Plus size={12} /> New
             </Link>
           </div>
-          <CampaignTable campaigns={CAMPAIGNS} compact />
+          <CampaignTable campaigns={campaigns} compact />
         </div>
 
         <div className="card">
@@ -146,11 +161,7 @@ export default function DashboardPage() {
                 value={currentTenant}
                 onChange={(e) => setCurrentTenant(e.target.value)}
               >
-                {Object.entries(TENANT_CONFIGS).map(([key, value]) => (
-                  <option key={key} value={key}>
-                    {value.label}
-                  </option>
-                ))}
+                <option value="all">All Users</option>
               </select>
               <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
                 ▼
@@ -160,7 +171,7 @@ export default function DashboardPage() {
 
           <div className="border-t border-gray-50 pt-4">
             <p className="card-title mb-3">Daily Send Limit</p>
-            <GaugeChart used={tenantCfg.used} max={tenantCfg.max} />
+            <GaugeChart used={tenantConfig.used} max={tenantConfig.max} />
           </div>
         </div>
 

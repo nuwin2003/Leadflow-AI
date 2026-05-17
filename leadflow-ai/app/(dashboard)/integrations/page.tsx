@@ -1,6 +1,8 @@
 import IntegrationsList from "@/components/IntegrationsList";
-import { WEBHOOKS } from "@/data/mockData";
 import { StatusBadge } from "@/utils/helpers";
+import type { WebhookEntry } from "@/types/app";
+
+const WEBHOOKS: WebhookEntry[] = [];
 
 export default function IntegrationsPage() {
   return (

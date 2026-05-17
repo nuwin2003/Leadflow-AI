@@ -4,11 +4,24 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 
 import CampaignTable from "@/components/CampaignTable";
-import { CAMPAIGNS } from "@/data/mockData";
+import { useApp } from "@/context/AppContext";
 import type { Campaign } from "@/types/app";
 
 export default function CampaignsPage() {
-  const [campaigns] = useState<Campaign[]>(CAMPAIGNS);
+  const { leads } = useApp();
+  const [campaigns] = useState<Campaign[]>(
+    leads.slice(0, 20).map((lead, index) => ({
+      id: index + 1,
+      name: `${lead.company} Outreach`,
+      source: lead.source.replace("_", " "),
+      status: lead.status,
+      leads: 1,
+      sent: lead.status === "email_sent" ? 1 : 0,
+      openRate: 0,
+      replyRate: 0,
+      campaign_id: `generated_${lead.id}`,
+    })),
+  );
   const [editing, setEditing] = useState<Campaign | null>(null);
 
   function handleEdit(campaign: Campaign) {
